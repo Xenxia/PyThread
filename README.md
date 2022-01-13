@@ -1,0 +1,2 @@
+# PyThread
+Thread parelle func
