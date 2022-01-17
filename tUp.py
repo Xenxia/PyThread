@@ -2,6 +2,7 @@ from threading import Thread, Event
 import threading
 import time, sys
 import random
+from xmlrpc.client import Boolean
 
 
 class ThreadUP(Thread):
@@ -18,6 +19,7 @@ class ThreadUP(Thread):
             Thread.join(self, *args)
         if self.returnValue:
             return self._return
+        # return
 
     def run(self):
         if self._target is not None:
@@ -34,6 +36,7 @@ class Test():
 
     def __init__(self) -> None:
         self.val = random.randint(0, 500)
+        time.sleep(1)
 
     def returnVal(self):
         return self.val
@@ -46,16 +49,38 @@ def test(time_n: int):
     return time_n
 
 task1 = ThreadUP(target=Test, returnValue=True)
-task2 = ThreadUP(target=lambda: test(10), returnValue=True).startJoin()
+task2 = ThreadUP(target=test, args=(2,), returnValue=True)
 
 try:
     task1.start()
+    task2.start()
 except:
     print(sys.exc_info()[0])
 
 
 print(task1.join().returnVal())
-print(task2)
+print(task2.join())
 
 
 print(f"finished at {time.strftime('%X')}")
+
+
+
+class Toto:
+
+    def __init__(self) -> None:
+        self.fruit = dict({
+            "toto": 0,
+            "titi": 1,
+            "tutu": 2,
+            "tata": "toto",
+            "tyty": 4,
+        })
+
+toto = Toto()
+
+
+tutu = sorted([*{f"test-{k}": v for k, v in toto.fruit.items() if v is not None}])
+
+
+print(( tutu))
