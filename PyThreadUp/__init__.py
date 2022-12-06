@@ -27,10 +27,11 @@ class ThreadUP(threading.Thread):
         if self._target is not None:
             self._return = self._target(*self._args, **self._kwargs)
 
-    def start(self):
+    def start(self) -> 'ThreadUP':
         self.__run_backup = self.run
         self.run = self.__run
         threading.Thread.start(self)
+        return self
 
     def join(self, *args):
         return self.__join(*args)
@@ -58,13 +59,19 @@ class ThreadManager():
     def __init__(self) -> None:
         self.threads = {}
 
-    def thread(self, name: str, target: Any | None, args: Any = (), returnValue: bool = False):
+    def thread(self, name: str, target: Any | None, args: Any = (), returnValue: bool = False) -> 'ThreadManager':
 
         self.threads[name] = ThreadUP(returnValue=returnValue, name=name, target=target, args=args)
+
+        return self
 
     def start(self, name: str):
 
         t = self.get_thread(name)
+        if t.is_alive():
+            print(name + " is start")
+            return
+
         try:
             t.start()
         except RuntimeError as e:
@@ -75,18 +82,19 @@ class ThreadManager():
         
         return self.get_thread(name).join()
 
-    def kill(self, name: str):
+    def kill(self, name: str, reCreate: bool = True):
         
         t = self.get_thread(name)
         t.kill()
+        if reCreate:
+            self.threads[name] = ThreadUP(name=t._name, target=t._target, args=t._args, returnValue=t.returnValue)
 
-        self.threads[name] = ThreadUP(name=t._name, target=t._target, args=t._args, returnValue=t.returnValue)
-
-    def kill_all(self):
+    def kill_all(self, reCreate: bool = True):
         
         for name, t in self.threads.items():
             t.kill()
-            self.threads[name] = ThreadUP(name=t._name, target=t._target, args=t._args, returnValue=t.returnValue)
+            if reCreate:
+                self.threads[name] = ThreadUP(name=t._name, target=t._target, args=t._args, returnValue=t.returnValue)
 
     def is_alive(self, name: str) -> bool:
         
@@ -102,6 +110,13 @@ class ThreadManager():
     def get_threads(self) -> dict[str, ThreadUP]:
 
         return self.threads
+
+    def set_args(self, name: str, args: tuple):
+        t = self.get_thread(name)
+
+        self.threads[name] = ThreadUP(name=t._name, target=t._target, args=args, returnValue=t.returnValue)
+
+        return self
 
     def remove(self, name: str):
 
